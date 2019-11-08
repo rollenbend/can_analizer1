@@ -12,6 +12,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Management;
 using System.Timers;
+using Newtonsoft.Json;
 
 namespace WindowsFormsApplication1
 {
@@ -20,14 +21,15 @@ namespace WindowsFormsApplication1
         public Thread ReadCOMThread;
         public delegate void delegates();
         delegates COM_ex, Read_COM_CAN;
-        public delegate void delegates2(byte Ncan, int RowIndex); delegates2 sendusb;
+        public delegate void delegates2(byte Ncan, int RowIndex);
+        delegates2 sendusb;
         public Form1()
         {
             InitializeComponent();
 
-             foreach (string s in System.IO.Ports.SerialPort.GetPortNames())
-                 comboBox1.Items.Add(s);
-             serialPort1.PortName = comboBox1.Text;
+            foreach (string s in System.IO.Ports.SerialPort.GetPortNames())
+                comboBox1.Items.Add(s);
+            serialPort1.PortName = comboBox1.Text;
             comboBox2.SelectedIndex = 3;
             comboBox3.SelectedIndex = 3;
         }
@@ -37,7 +39,7 @@ namespace WindowsFormsApplication1
             if (canRxbuf[0] == CAN1_Number)
             {
                 string rxmess = cntCAN1mess++.ToString() + "  ID = " + BitConverter.ToUInt32(canRxbuf, 2).ToString("X")
-             + " DLC = " + canRxbuf[6].ToString("X") + "   DATA = " + BitConverter.ToString(canRxbuf, 7, canRxbuf[6]%9) + "\r\n";
+             + " DLC = " + canRxbuf[6].ToString("X") + "   DATA = " + BitConverter.ToString(canRxbuf, 7, canRxbuf[6] % 9) + "\r\n";
                 richTextBox3.AppendText(rxmess);
                 if (richTextBox3.Lines.GetLength(0) > 44) richTextBox3.Text = richTextBox3.Text.Remove(0, richTextBox3.Lines[0].Length + 1);
                 richTextBox3.SelectionStart = richTextBox3.Text.Length;
@@ -46,7 +48,7 @@ namespace WindowsFormsApplication1
             else
             {
                 string rxmess = cntCAN2mess++.ToString() + "  ID = " + BitConverter.ToUInt32(canRxbuf, 2).ToString("X")
-             + " DLC = " + canRxbuf[6].ToString("X") + "   DATA = " + BitConverter.ToString(canRxbuf, 7, canRxbuf[6]%9) + "\r\n";
+             + " DLC = " + canRxbuf[6].ToString("X") + "   DATA = " + BitConverter.ToString(canRxbuf, 7, canRxbuf[6] % 9) + "\r\n";
                 richTextBox4.AppendText(rxmess);
                 if (richTextBox4.Lines.GetLength(0) > 44) richTextBox4.Text = richTextBox4.Text.Remove(0, richTextBox4.Lines[0].Length + 1);
                 richTextBox4.SelectionStart = richTextBox4.Text.Length;
@@ -67,8 +69,8 @@ namespace WindowsFormsApplication1
                     {
                         if (serialPort1.BytesToRead >= 15)
                         {
-                             serialPort1.BaseStream.ReadAsync(canRxbuf, 0, 15);
-                             Invoke(Read_COM_CAN);
+                            serialPort1.BaseStream.ReadAsync(canRxbuf, 0, 15);
+                            Invoke(Read_COM_CAN);
                         }
                     }
                 } catch (UnauthorizedAccessException)
@@ -81,51 +83,67 @@ namespace WindowsFormsApplication1
         {
         }
 
+
         private void Form1_Load(object sender, EventArgs e)
         {
             COM_ex = COM_exeption;
             Read_COM_CAN = Read_CAN_Mess_From_COM;
             sendusb = send_to_USB;
 
-            dataGridView1.Rows.Add("11CE7304", "C00F FFFF", "", "right time 32 sec", "Start", "100"); 
-            dataGridView1.Rows.Add("11CE7304", "C00E FFFF", "", "left time 32 sec", "Start", "100");
-            dataGridView1.Rows.Add("11CE7304", "C00F 17FF", "", "right time 3 sec", "Start", "100");
-            dataGridView1.Rows.Add("11CE7304", "C00E 17FF", "", "left time 3 sec", "Start", "100");
-            dataGridView1.Rows.Add("11CE7304", "C00F 000F", "", "right time 0.1 sec", "Start", "100");
-            dataGridView1.Rows.Add("11CE7304", "C00E 000F", "", "left time 0.1 sec", "Start", "100");
-            dataGridView1.Rows.Add("11CE7304", "C011 0000", "", "full right", "Start", "100");
-            dataGridView1.Rows.Add("11CE7304", "C010 0000", "", "full left", "Start", "100");
-            dataGridView1.Rows.Add("11CE7304", "C001 0001", "", "priority", "Start", "100");
-            dataGridView1.Rows.Add("11CE7304", "C002 0001", "", "BU addr=1", "Start", "100");
-            dataGridView1.Rows.Add("1BEE7204", "0000 0000 0000 0000", "", "PHSM BU main", "Start", "10");
-            dataGridView1.Rows.Add("1BEE7204", "0000 0000 0000 0000", "", "PHSM BU res", "Start", "10");
+            string Can1SettingsJson, Can2SettingsJson;
+            List<string[]> Can1Settings, Can2Settings;
 
-            dataGridView2.Rows.Add("11CE7304", "C00C 016C", "angle otn", "+1 deg");
-            dataGridView2.Rows.Add("11CE7304", "C00C FD28", "angle otn", "-1 deg");
-            dataGridView2.Rows.Add("11CE7304", "C00C 0E38", "angle otn", "+10 deg");
-            dataGridView2.Rows.Add("11CE7304", "C00C F1C9", "angle otn", "-10 deg");
-            dataGridView2.Rows.Add("11CE7304", "C00D 5555", "angle abs", "60 deg");
-            dataGridView2.Rows.Add("11CE7304", "C00D 1C71", "angle abs", "20 deg");
-            dataGridView2.Rows.Add("11CE7304", "C012 0E38 17FF", "angle+time", "+10; 3sec");
-            dataGridView2.Rows.Add("11CE7304", "C012 F1C9 17FF", "angle+time", "-10; 3sec");
-            dataGridView2.Rows.Add("11CE7304", "C003 4FFF", "valve speed", "10sec");
+            try
+            {
+                Can2SettingsJson = File.ReadAllText(@"..\can2settings.json");
+                Can2Settings = JsonConvert.DeserializeObject<List<string[]>>(Can2SettingsJson);
+            }
+            catch (FileNotFoundException)
+            {
+                Can2Settings = new List<string[]>()
+                {
+                        new string[]{"11CE7304", "C00C 016C", " ", "angle otn +1 deg", "Start", "100"},
+                        new string[]{"11CE7304", "C00C FD28", " ", "angle otn -1 deg", "Start", "100" },
+                        new string[]{"11CE7304", "C00C 0E38", " ", "angle otn +10 deg", "Start", "100"},
+                        new string[]{"11CE7304", "C00C F1C9", " ", "angle otn -10 deg", "Start", "100" },
+                        new string[]{"11CE7304", "C00D 5555", " ", "angle otn 60 deg", "Start", "100" },
+                        new string[]{"11CE7304", "C00D 1C71", " ", "angle otn 20 deg", "Start", "100" },
+                };
+            }
+            for (int i = 0; i < Can2Settings.Count; i++)
+            {
+                dataGridView2.Rows.Add(Can2Settings[i]);
+            }
 
-            /*  dataGridView1.Rows.Add("BE00", "", "BOOT");
-              dataGridView1.Rows.Add("100", "", "PING");
-              dataGridView1.Rows.Add("11", "", "read");
-              dataGridView1.Rows.Add("31", "0000000000000d44", "write");
-              dataGridView1.Rows.Add("43", "0401", "erase pages");
-              dataGridView1.Rows.Add("99", "0000000000000d44", "Check CRC");
-              dataGridView1.Rows.Add("A3", "", "Reboot");*/
+            try
+            {
+                Can1SettingsJson = File.ReadAllText(@"..\can1settings.json");
+                Can1Settings = JsonConvert.DeserializeObject<List<string[]>>(Can1SettingsJson);
+            }
+            catch (FileNotFoundException)
+            {
+                Can1Settings = new List<string[]>()
+                {
+                        new string[]{"11CE7304", "C00F FFFF", " ", "right time 32 sec", "Start", "100"},
+                        new string[]{"11CE7304", "C00E FFFF", " ", "left time 32 sec", "Start", "100" },
+                        new string[]{"11CE7304", "C00F 17FF", " ", "right time 3 sec", "Start", "100" },
+                        new string[]{"11CE7304", "C00E 17FF", " ", "left time 3 sec", "Start", "100" },
+                        new string[]{"11CE7304", "C00F 000F", " ", "right time 0.1 sec", "Start", "100" },
+                        new string[]{"11CE7304", "C00E 000F", " ", "left time 0.1 sec", "Start", "100" },
+                        new string[]{"11CE7304", "C011 0000", " ", "full right", "Start", "100" },
+                        new string[]{"11CE7304", "C010 0000", " ", "full left", "Start", "100" },
+                        new string[]{"11CE7304", "C001 0001", " ", "priority", "Start", "100" },
+                        new string[]{"11CE7304", "C002 0001", " ", "BU addr=1", "Start", "100" },
+                        new string[]{"1BEE7204", "0000 0000 0000 0000", " ", "PHSM BU main", "Start", "10" },
+                        new string[]{"1BEE7204", "0000 0000 0000 0000", " ", "PHSM BU res", "Start", "10" },
+                };
+            }
 
-            /*    dataGridView1.Rows.Add("5", "11", "test1");
-                 dataGridView1.Rows.Add("5", "11 22", "test2");
-                 dataGridView1.Rows.Add("5", "11 22 33", "test3");
-                 dataGridView1.Rows.Add("5", "11 22 33 44", "test4");
-                 dataGridView1.Rows.Add("5", "11 22 33 44 55", "test5");
-                 dataGridView1.Rows.Add("5", "11 22 33 44 55 66", "test6");
-                 dataGridView1.Rows.Add("5", "11 22 33 44 55 66 77", "test7");
-                 dataGridView1.Rows.Add("5", "11 22 33 44 55 66 77 88", "test8");*/
+            for (int i = 0; i < Can1Settings.Count; i++)
+            {
+                dataGridView1.Rows.Add(Can1Settings[i]);
+            }
+
         }
 
 
@@ -133,7 +151,7 @@ namespace WindowsFormsApplication1
         {
             label1.Text = "PORT DOESN'T EXIST ANYMORE!";
             label1.ForeColor = Color.DeepPink;
-           // if (ReadCOMThread.IsAlive) ReadCOMThread.Abort();
+            // if (ReadCOMThread.IsAlive) ReadCOMThread.Abort();
             GC.Collect();
             GC.WaitForPendingFinalizers();
             comboBox1.Items.Clear();
@@ -198,29 +216,29 @@ namespace WindowsFormsApplication1
             catch (NullReferenceException)
             {
             }
-            catch (System.InvalidOperationException)
+            catch (InvalidOperationException)
             {
                 label1.Text = "PORT CLOSED!";
                 label1.ForeColor = Color.SaddleBrown;
             }
         }
-        
+
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.ColumnIndex == 4)
             {
-                if (TimerSwitch++ % 2 == 0)
+                if (Timer1Switch++ % 2 == 0)
                 {
-                    TimerRowIndex = e.RowIndex;
-                    dataGridView1.Rows[TimerRowIndex].Cells[5].Style.BackColor = Color.Yellow;
-                    uint interval = Convert.ToUInt32(dataGridView1.Rows[TimerRowIndex].Cells[5].Value.ToString(), 10);
-                    SetTimer(interval);
+                    Timer1RowIndex = e.RowIndex;
+                    dataGridView1.Rows[Timer1RowIndex].Cells[5].Style.BackColor = Color.Yellow;
+                    uint interval = Convert.ToUInt32(dataGridView1.Rows[Timer1RowIndex].Cells[5].Value.ToString(), 10);
+                    SetTimer1(interval);
                 }
                 else
                 {
-                    dataGridView1.Rows[TimerRowIndex].Cells[5].Style.BackColor = Color.White;
-                    aTimer.Stop();
-                    aTimer.Dispose();
+                    dataGridView1.Rows[Timer1RowIndex].Cells[5].Style.BackColor = Color.White;
+                    aTimer1.Stop();
+                    aTimer1.Dispose();
                 }
             }
             if (e.ColumnIndex == 2)
@@ -229,22 +247,62 @@ namespace WindowsFormsApplication1
                 if (sender == dataGridView2) send_to_USB(CAN2_Number, e.RowIndex);
             }
         }
-        private static System.Timers.Timer aTimer;
-        private int TimerRowIndex, TimerSwitch=0;
-        private void OnTimedEvent(Object source, ElapsedEventArgs e)
+        private void dataGridView2_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            Invoke(sendusb, CAN1_Number, TimerRowIndex); 
+            if (e.ColumnIndex == 4)
+            {
+                if (Timer2Switch++ % 2 == 0)
+                {
+                    Timer2RowIndex = e.RowIndex;
+                    dataGridView2.Rows[Timer2RowIndex].Cells[5].Style.BackColor = Color.Yellow;
+                    uint interval = Convert.ToUInt32(dataGridView2.Rows[Timer2RowIndex].Cells[5].Value.ToString(), 10);
+                    SetTimer2(interval);
+                }
+                else
+                {
+                    dataGridView2.Rows[Timer2RowIndex].Cells[5].Style.BackColor = Color.White;
+                    aTimer2.Stop();
+                    aTimer2.Dispose();
+                }
+            }
+            if (e.ColumnIndex == 2)
+            {
+                if (sender == dataGridView1) send_to_USB(CAN1_Number, e.RowIndex);
+                if (sender == dataGridView2) send_to_USB(CAN2_Number, e.RowIndex);
+            }
         }
-        private void SetTimer(uint interval)
+        private static System.Timers.Timer aTimer1;
+        private int Timer1RowIndex, Timer1Switch = 0;
+        private static System.Timers.Timer aTimer2;
+        private int Timer2RowIndex, Timer2Switch = 0;
+        private void OnTimedEvent1(Object source, ElapsedEventArgs e)
+        {
+            Invoke(sendusb, CAN1_Number, Timer1RowIndex);
+        }
+        private void SetTimer1(uint interval)
         {
             // Create a timer with a one second interval.
-            aTimer = new System.Timers.Timer(Convert.ToDouble(interval));
+            aTimer1 = new System.Timers.Timer(Convert.ToDouble(interval));
             // Hook up the Elapsed event for the timer. 
-            aTimer.Elapsed += OnTimedEvent;
-            aTimer.AutoReset = true;
-            aTimer.Enabled = true;
+            aTimer1.Elapsed += OnTimedEvent1;
+            aTimer1.AutoReset = true;
+            aTimer1.Enabled = true;
         }
-        
+
+        private void OnTimedEvent2(Object source, ElapsedEventArgs e)
+        {
+            Invoke(sendusb, CAN2_Number, Timer2RowIndex);
+        }
+        private void SetTimer2(uint interval)
+        {
+            // Create a timer with a one second interval.
+            aTimer2 = new System.Timers.Timer(Convert.ToDouble(interval));
+            // Hook up the Elapsed event for the timer. 
+            aTimer2.Elapsed += OnTimedEvent2;
+            aTimer2.AutoReset = true;
+            aTimer2.Enabled = true;
+        }
+
         private void clear_CAN_Rx_bt_Click(object sender, EventArgs e)
         {
             richTextBox3.Clear();
@@ -253,16 +311,52 @@ namespace WindowsFormsApplication1
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (aTimer != null)
+            if (aTimer1 != null)
             {
-                aTimer.Stop();
-                aTimer.Dispose();
+                aTimer1.Stop();
+                aTimer1.Dispose();
+            }
+            if (aTimer2 != null)
+            {
+                aTimer2.Stop();
+                aTimer2.Dispose();
             }
             if (serialPort1.IsOpen)
             {
                 ReadCOMThread.Abort();
                 serialPort1.Close();
             }
+
+            List<string[]> can1settings = new List<string[]>(dataGridView1.RowCount);
+            List<string[]> can2settings = new List<string[]>(dataGridView2.RowCount);
+
+            for (int i = 0; i < dataGridView1.RowCount - 1; i++)
+            {
+                can1settings.Add(new string[]
+                {
+                    dataGridView1[0, i].Value==null?"":dataGridView1[0, i].Value.ToString(),
+                    dataGridView1[1, i].Value==null?"":dataGridView1[1, i].Value.ToString(),
+                    dataGridView1[2, i].Value==null?"":dataGridView1[2, i].Value.ToString(),
+                    dataGridView1[3, i].Value==null?"":dataGridView1[3, i].Value.ToString(),
+                    dataGridView1[4, i].Value==null?"":dataGridView1[4, i].Value.ToString(),
+                    dataGridView1[5, i].Value==null?"":dataGridView1[5, i].Value.ToString(),
+                });
+            }
+
+            for (int i = 0; i < dataGridView2.RowCount - 1; i++)
+            {
+                can2settings.Add(new string[]
+                {
+                    dataGridView2[0, i].Value==null?"":dataGridView2[0, i].Value.ToString(),
+                    dataGridView2[1, i].Value==null?"":dataGridView2[1, i].Value.ToString(),
+                    dataGridView2[2, i].Value==null?"":dataGridView2[2, i].Value.ToString(),
+                    dataGridView2[3, i].Value==null?"":dataGridView2[3, i].Value.ToString(),
+                    dataGridView2[4, i].Value==null?"":dataGridView2[4, i].Value.ToString(),
+                    dataGridView2[5, i].Value==null?"":dataGridView2[5, i].Value.ToString(),
+                });
+            }
+            File.WriteAllText(@"..\can1settings.json", JsonConvert.SerializeObject(can1settings));
+            File.WriteAllText(@"..\can2settings.json", JsonConvert.SerializeObject(can2settings));
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -289,6 +383,20 @@ namespace WindowsFormsApplication1
                 e.KeyChar = 'E';
             if (e.KeyChar == 'f')
                 e.KeyChar = 'F';
+        }
+
+        private void dataGridView1_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
+        {
+            if (dataGridView1.CurrentCell.ColumnIndex <= 1)
+            {
+                TextBox tb = (TextBox)e.Control;
+                tb.KeyPress += new KeyPressEventHandler(dataGridView1_KeyPress);
+            }
+            else
+            {
+                TextBox tb = (TextBox)e.Control;
+                tb.KeyPress -= dataGridView1_KeyPress;
+            }
         }
 
         private void clear2_Click(object sender, EventArgs e)
@@ -319,9 +427,9 @@ namespace WindowsFormsApplication1
                     if (Ncan == CAN2_Number && IsOpening == 1) { label5.ForeColor = Color.Green; comboBox3.Enabled = false; }
                     if (Ncan == CAN1_Number && IsOpening == 0) { label2.ForeColor = Color.Red; comboBox2.Enabled = true; }
                     if (Ncan == CAN2_Number && IsOpening == 0) { label5.ForeColor = Color.Red; comboBox3.Enabled = true; }
-                    }
+                }
 
-                if (serialPort1.IsOpen && IsOpening == 0 && (IsCAN1_connect * IsCAN2_connect == 0) )
+                if (serialPort1.IsOpen && IsOpening == 0 && (IsCAN1_connect * IsCAN2_connect == 0))
                 {
                     ReadCOMThread.Abort();
                     serialPort1.Close();
@@ -397,29 +505,6 @@ namespace WindowsFormsApplication1
             }
         }
 
-        private void dataGridView2_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.ColumnIndex == 2)
-            {
-                if (sender == dataGridView1) send_to_USB(CAN1_Number, e.RowIndex);
-                if (sender == dataGridView2) send_to_USB(CAN2_Number, e.RowIndex);
-            }
-        }
-
-        private void dataGridView1_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
-        {
-            if (dataGridView1.CurrentCell.ColumnIndex <= 1)
-            {
-                TextBox tb = (TextBox)e.Control;
-                tb.KeyPress += new KeyPressEventHandler(dataGridView1_KeyPress);
-            }
-            else
-            {
-                TextBox tb = (TextBox)e.Control;
-                tb.KeyPress -= dataGridView1_KeyPress;
-            }
-        }
-
         private void button1_Click(object sender, EventArgs e)
         {
             try
@@ -464,12 +549,41 @@ namespace WindowsFormsApplication1
             }
         }
 
-       
-
     }
+   
 }
 
+//public class CANTransmitter
+//{
+//    public string ID { get; set; }
+//    public string Data { get; set; }
+//    public string Send { get; set; }
+//    public string Comment { get; set; }
+//    public string Repeating { get; set; }
+//    public string Period { get; set; }
+//}
+/* dataGridView1.Rows.Add("11CE7304", "C00F FFFF", "", "right time 32 sec", "Start", "100"); 
+ dataGridView1.Rows.Add("11CE7304", "C00E FFFF", "", "left time 32 sec", "Start", "100");
+ dataGridView1.Rows.Add("11CE7304", "C00F 17FF", "", "right time 3 sec", "Start", "100");
+ dataGridView1.Rows.Add("11CE7304", "C00E 17FF", "", "left time 3 sec", "Start", "100");
+ dataGridView1.Rows.Add("11CE7304", "C00F 000F", "", "right time 0.1 sec", "Start", "100");
+ dataGridView1.Rows.Add("11CE7304", "C00E 000F", "", "left time 0.1 sec", "Start", "100");
+ dataGridView1.Rows.Add("11CE7304", "C011 0000", "", "full right", "Start", "100");
+ dataGridView1.Rows.Add("11CE7304", "C010 0000", "", "full left", "Start", "100");
+ dataGridView1.Rows.Add("11CE7304", "C001 0001", "", "priority", "Start", "100");
+ dataGridView1.Rows.Add("11CE7304", "C002 0001", "", "BU addr=1", "Start", "100");
+ dataGridView1.Rows.Add("1BEE7204", "0000 0000 0000 0000", "", "PHSM BU main", "Start", "10");
+ dataGridView1.Rows.Add("1BEE7204", "0000 0000 0000 0000", "", "PHSM BU res", "Start", "10");
 
+ dataGridView2.Rows.Add("11CE7304", "C00C 016C", "angle otn", "+1 deg");
+ dataGridView2.Rows.Add("11CE7304", "C00C FD28", "angle otn", "-1 deg");
+ dataGridView2.Rows.Add("11CE7304", "C00C 0E38", "angle otn", "+10 deg");
+ dataGridView2.Rows.Add("11CE7304", "C00C F1C9", "angle otn", "-10 deg");
+ dataGridView2.Rows.Add("11CE7304", "C00D 5555", "angle abs", "60 deg");
+ dataGridView2.Rows.Add("11CE7304", "C00D 1C71", "angle abs", "20 deg");
+ dataGridView2.Rows.Add("11CE7304", "C012 0E38 17FF", "angle+time", "+10; 3sec");
+ dataGridView2.Rows.Add("11CE7304", "C012 F1C9 17FF", "angle+time", "-10; 3sec");
+ dataGridView2.Rows.Add("11CE7304", "C003 4FFF", "valve speed", "10sec");*/
 
 /*private void disconnect(object sender, EventArgs e)
 {

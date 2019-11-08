@@ -38,10 +38,6 @@
             this.richTextBox3 = new System.Windows.Forms.RichTextBox();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.dataGridView2 = new System.Windows.Forms.DataGridView();
-            this.IDCAN2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.DataCAN2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.sendCAN2 = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.commentCAN2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.label4 = new System.Windows.Forms.Label();
             this.richTextBox4 = new System.Windows.Forms.RichTextBox();
             this.comboBox2 = new System.Windows.Forms.ComboBox();
@@ -57,6 +53,12 @@
             this.comment = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.SendAlws = new System.Windows.Forms.DataGridViewButtonColumn();
             this.Period = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.IDCAN2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.DataCAN2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.sendCAN2 = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.commentCAN2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.RepeatingCAN2 = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.PeriodCAN2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
             this.SuspendLayout();
@@ -142,42 +144,20 @@
             // 
             // dataGridView2
             // 
+            this.dataGridView2.AllowUserToOrderColumns = true;
             this.dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView2.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.IDCAN2,
             this.DataCAN2,
             this.sendCAN2,
-            this.commentCAN2});
+            this.commentCAN2,
+            this.RepeatingCAN2,
+            this.PeriodCAN2});
             this.dataGridView2.Location = new System.Drawing.Point(755, 369);
             this.dataGridView2.Name = "dataGridView2";
-            this.dataGridView2.Size = new System.Drawing.Size(494, 321);
+            this.dataGridView2.Size = new System.Drawing.Size(541, 321);
             this.dataGridView2.TabIndex = 8;
             this.dataGridView2.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView2_CellContentClick);
-            // 
-            // IDCAN2
-            // 
-            this.IDCAN2.HeaderText = "ID";
-            this.IDCAN2.MaxInputLength = 8;
-            this.IDCAN2.Name = "IDCAN2";
-            this.IDCAN2.Width = 75;
-            // 
-            // DataCAN2
-            // 
-            this.DataCAN2.HeaderText = "Data";
-            this.DataCAN2.MaxInputLength = 23;
-            this.DataCAN2.Name = "DataCAN2";
-            this.DataCAN2.Width = 145;
-            // 
-            // sendCAN2
-            // 
-            this.sendCAN2.HeaderText = "send";
-            this.sendCAN2.Name = "sendCAN2";
-            // 
-            // commentCAN2
-            // 
-            this.commentCAN2.HeaderText = "comment";
-            this.commentCAN2.Name = "commentCAN2";
-            this.commentCAN2.Width = 70;
             // 
             // label4
             // 
@@ -308,9 +288,47 @@
             // Period
             // 
             this.Period.HeaderText = "Period(ms)";
-            this.Period.MaxInputLength = 5;
+            this.Period.MaxInputLength = 10;
             this.Period.Name = "Period";
             this.Period.Width = 60;
+            // 
+            // IDCAN2
+            // 
+            this.IDCAN2.HeaderText = "ID";
+            this.IDCAN2.MaxInputLength = 8;
+            this.IDCAN2.Name = "IDCAN2";
+            this.IDCAN2.Width = 75;
+            // 
+            // DataCAN2
+            // 
+            this.DataCAN2.HeaderText = "Data";
+            this.DataCAN2.MaxInputLength = 23;
+            this.DataCAN2.Name = "DataCAN2";
+            this.DataCAN2.Width = 145;
+            // 
+            // sendCAN2
+            // 
+            this.sendCAN2.HeaderText = "Send";
+            this.sendCAN2.Name = "sendCAN2";
+            this.sendCAN2.Width = 40;
+            // 
+            // commentCAN2
+            // 
+            this.commentCAN2.HeaderText = "Comment";
+            this.commentCAN2.Name = "commentCAN2";
+            // 
+            // RepeatingCAN2
+            // 
+            this.RepeatingCAN2.HeaderText = "Repeating";
+            this.RepeatingCAN2.Name = "RepeatingCAN2";
+            this.RepeatingCAN2.Width = 75;
+            // 
+            // PeriodCAN2
+            // 
+            this.PeriodCAN2.HeaderText = "Period(ms)";
+            this.PeriodCAN2.MaxInputLength = 10;
+            this.PeriodCAN2.Name = "PeriodCAN2";
+            this.PeriodCAN2.Width = 60;
             // 
             // Form1
             // 
@@ -364,10 +382,6 @@
         private System.Windows.Forms.Button connectCAN1;
         private System.Windows.Forms.Button clear2;
         private System.Windows.Forms.Button connectCAN2;
-        private System.Windows.Forms.DataGridViewTextBoxColumn IDCAN2;
-        private System.Windows.Forms.DataGridViewTextBoxColumn DataCAN2;
-        private System.Windows.Forms.DataGridViewButtonColumn sendCAN2;
-        private System.Windows.Forms.DataGridViewTextBoxColumn commentCAN2;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.DataGridViewTextBoxColumn CANID;
         private System.Windows.Forms.DataGridViewTextBoxColumn CANData;
@@ -375,6 +389,12 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn comment;
         private System.Windows.Forms.DataGridViewButtonColumn SendAlws;
         private System.Windows.Forms.DataGridViewTextBoxColumn Period;
+        private System.Windows.Forms.DataGridViewTextBoxColumn IDCAN2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn DataCAN2;
+        private System.Windows.Forms.DataGridViewButtonColumn sendCAN2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn commentCAN2;
+        private System.Windows.Forms.DataGridViewButtonColumn RepeatingCAN2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn PeriodCAN2;
     }
 }
 
